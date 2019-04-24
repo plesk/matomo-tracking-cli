@@ -163,5 +163,8 @@ EOD
                 $tracker->track($handler, $requestSet);
             }
         }
+
+        $output->writeln('<info>Success</info>');
+        $output->writeln('Memory peak usage: ' . memory_get_peak_usage(true));
     }
 }
