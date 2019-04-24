@@ -11,10 +11,11 @@ use Piwik\Plugin\ConsoleCommand;
 use Piwik\Tracker;
 use Piwik\Tracker\RequestSet;
 use Piwik\Tracker\Handler;
+use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
-//use Symfony\Component\HttpFoundation\Request;
+use SplFileObject;
 
 
 /**
@@ -47,7 +48,7 @@ class Import extends ConsoleCommand
             'c',
             InputOption::VALUE_REQUIRED,
             <<<'EOD'
-Columns map. 
+Columns map 
     Format: matomoApiArgumentName1|matomoApiArgumentName2|...
     Example: url|action_name|ua
 EOD
@@ -59,14 +60,15 @@ EOD
             'd',
             InputOption::VALUE_OPTIONAL,
             <<<'EOD'
-Columns delimeter.
-    Format: s - character, \digits - the character with the given decimal code.
+Columns delimeter
+    Format: s - character, \digits - the character with the given decimal code
     Example: |
     Example: \0
 EOD
             ,
             $this->defaultDelimeter
         );
+
 
         $this->addOption(
             'batchsize',
@@ -75,6 +77,14 @@ EOD
             'Batch size when importing',
             $this->defaultBatchsize
         );
+
+        $this
+            ->addArgument(
+                'inputfile',
+                InputArgument::OPTIONAL,
+                'Path to input file or \'-\' for stdin',
+                '-'
+            );
     }
 
     /**
@@ -92,8 +102,6 @@ EOD
     {
         $this->checkAllRequiredOptionsAreNotEmpty($input);
 
-        //require_once __DIR__ . '/../piwikBootstrap.php';
-
         $idsite = $input->getOption('idsite');
 
         $columns = explode(
@@ -108,40 +116,34 @@ EOD
 
         $batchsize = $input->getOption('batchsize');
 
-        $output->writeln("<info>idsite = $idsite, columns = " . json_encode($columns) . ", delimeter = $delimeter, batchsize = $batchsize</info>");
+        $inputfile = $input->getArgument('inputfile');
+        if ($inputfile == '-') {
+            $inputfile = 'php://stdin';
+        }
 
-        $stdin = <<<'EOD'
-1|Test|http://test.com#1|Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/65.0.3325.146 Safari/537.36
-1|Test2 asdasd|http://test.com/sfsdfsdf/ssss|Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/65.0.3325.146 Safari/537.36
-1|Test3|http://test.com/sdasda#3|Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/65.0.3325.146 Safari/537.36
-EOD;
+        if ($output->getVerbosity() >= OutputInterface::VERBOSITY_DEBUG) {
+            $output->writeln("<info>\idsite = $idsite, columns = " . json_encode($columns) . ", delimeter = $delimeter, batchsize = $batchsize, inputfile = $inputfile</info>");
+        }
 
-        //$output->writeln(var_export(explode("\n", $stdin), true));
-
+        $file = new SplFileObject($inputfile);
         $tracker    = new Tracker();
         $handler  = Handler\Factory::make();
         $requestSet = new RequestSet();
         //setTokenAuth($tokenAuth)
 
-        $requests = [];
-        foreach (explode("\n", $stdin) as $rowstring) {
-            $output->writeln($rowstring);
-            $row = explode('|', $rowstring);
+        $file->setFlags(
+            SplFileObject::SKIP_EMPTY |
+            SplFileObject::DROP_NEW_LINE
+        );
+        while (!$file->eof()) {
 
-            $requests[] = [
-                'rec' => 1,
-                'apiv' => 1,
-                'send_image' => 0,
-                'idsite' => $row[0],
-                'action_name' => $row[1],
-                'url' => $row[2],
-                'ua' => $row[3],
-                'cdt' => '2019-04-24 05:44:00',
-            ];
+            $requests = [];
+            for ($i = 0; $i < $batchsize && !$file->eof(); $i++) {
+                $rowstring = $file->fgets();
 
-            /*$request = new Request(
-                [],
-                [
+                $row = explode('|', $rowstring);
+
+                $requests[] = [
                     'rec' => 1,
                     'apiv' => 1,
                     'send_image' => 0,
@@ -150,24 +152,16 @@ EOD;
                     'url' => $row[2],
                     'ua' => $row[3],
                     'cdt' => '2019-04-24 05:44:00',
-                ],
-                [],
-                [],
-                [],
-                []
-            );
-            $request->overrideGlobals();*/
+                ];
+            }
 
-            //require __DIR__ . '/../../../piwik.php';
-            //require '/home/dshiryaev/Repo/Vendor/matomo/matomo/piwik.php';
+            if ($requests) {
+                if ($output->getVerbosity() >= OutputInterface::VERBOSITY_VERY_VERBOSE) {
+                    $output->writeln(json_encode($requests));
+                }
+                $requestSet->setRequests($requests);
+                $tracker->track($handler, $requestSet);
+            }
         }
-
-        $requestSet->setRequests($requests);
-
-        //$handler->init($tracker, $requestSet);
-
-        $tracker->track($handler, $requestSet);
-
-        //$response = $tracker->main($handler, $requestSet);
     }
 }
