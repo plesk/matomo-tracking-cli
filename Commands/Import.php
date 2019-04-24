@@ -141,18 +141,18 @@ EOD
             for ($i = 0; $i < $batchsize && !$file->eof(); $i++) {
                 $rowstring = $file->fgets();
 
-                $row = explode('|', $rowstring);
+                $row = explode($delimeter, $rowstring);
 
-                $requests[] = [
+                $request = [
+                    'idsite' => $idsite,
                     'rec' => 1,
                     'apiv' => 1,
                     'send_image' => 0,
-                    'idsite' => $row[0],
-                    'action_name' => $row[1],
-                    'url' => $row[2],
-                    'ua' => $row[3],
-                    'cdt' => '2019-04-24 05:44:00',
                 ];
+                foreach ($columns as $i => $column) {
+                    $request[$column] = $row[$i];
+                }
+                $requests[] = $request;
             }
 
             if ($requests) {
