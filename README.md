@@ -3,7 +3,7 @@
 ## Description
 Import tracking data to Matomo via CLI and stdin.
 
-## Interface
+### Interface
 
 ```bash
 ./console help trackingcli:import
@@ -35,7 +35,7 @@ Options:
  --no-ansi             Disable ANSI output
 ```
 
-## Example
+### Example
 
 data.txt:
 ```
