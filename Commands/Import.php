@@ -8,6 +8,7 @@
 namespace Piwik\Plugins\TrackingCLI\Commands;
 
 use Piwik\Plugin\ConsoleCommand;
+use Piwik\Plugins\TrackingCLI\lib\AuthenticatedRequest;
 use Piwik\Tracker;
 use Piwik\Tracker\RequestSet;
 use Piwik\Tracker\Handler;
@@ -19,11 +20,9 @@ use SplFileObject;
 
 
 /**
- * This class lets you define a new command. To read more about commands have a look at our Piwik Console guide on
- * http://developer.piwik.org/guides/piwik-on-the-command-line
- *
- * As Piwik Console is based on the Symfony Console you might also want to have a look at
- * http://symfony.com/doc/current/components/console/index.html
+ * @see https://developer.matomo.org/api-reference/tracking-api Matomo tracking API
+ * @see http://developer.piwik.org/guides/piwik-on-the-command-line Piwik Console guide
+ * @see http://symfony.com/doc/current/components/console/index.html Symfony Console guide
  */
 class Import extends ConsoleCommand
 {
@@ -31,16 +30,19 @@ class Import extends ConsoleCommand
     public $defaultBatchsize = 100;
 
 
-    /**
-     * This methods allows you to configure your command. Here you can define the name and description of your command
-     * as well as all options and arguments you expect when executing it.
-     */
     protected function configure()
     {
         $this->setName('trackingcli:import');
-        $this->setDescription('Import tracking data to Matomo via CLI and stdin');
+        $this->setDescription(
+            'Import tracking data to Matomo via CLI and stdin. Data rows are delimited by Unix new line character.'
+        );
 
-        $this->addOption('idsite', 's', InputOption::VALUE_REQUIRED, 'Matomo site ID');
+        $this->addOption(
+            'idsite',
+            's',
+            InputOption::VALUE_REQUIRED,
+            'Matomo site ID'
+        );
 
 
         $this->addOption(
@@ -51,6 +53,7 @@ class Import extends ConsoleCommand
 Columns map 
     Format: matomoApiArgumentName1|matomoApiArgumentName2|...
     Example: url|action_name|ua
+    See https://developer.matomo.org/api-reference/tracking-api for details
 EOD
             );
 
@@ -87,17 +90,6 @@ EOD
             );
     }
 
-    /**
-     * The actual task is defined in this method. Here you can access any option or argument that was defined on the
-     * command line via $input and write anything to the console via $output argument.
-     * In case anything went wrong during the execution you should throw an exception to make sure the user will get a
-     * useful error message and to make sure the command does not exit with the status code 0.
-     *
-     * Ideally, the actual command is quite short as it acts like a controller. It should only receive the input values,
-     * execute the task by calling a method of another class and output any useful information.
-     *
-     * Execute the command like: ./console trackingcli:import --name="The Piwik Team"
-     */
     protected function execute(InputInterface $input, OutputInterface $output)
     {
         $this->checkAllRequiredOptionsAreNotEmpty($input);
@@ -129,7 +121,6 @@ EOD
         $tracker    = new Tracker();
         $handler  = Handler\Factory::make();
         $requestSet = new RequestSet();
-        //setTokenAuth($tokenAuth)
 
         $file->setFlags(
             SplFileObject::SKIP_EMPTY |
@@ -149,15 +140,24 @@ EOD
                     'apiv' => 1,
                     'send_image' => 0,
                 ];
-                foreach ($columns as $i => $column) {
-                    $request[$column] = $row[$i];
+                foreach ($columns as $j => $column) {
+                    $request[$column] = $row[$j];
                 }
-                $requests[] = $request;
+                $requests[] = new AuthenticatedRequest($request);
             }
 
             if ($requests) {
                 if ($output->getVerbosity() >= OutputInterface::VERBOSITY_VERY_VERBOSE) {
-                    $output->writeln(json_encode($requests));
+                    $output->writeln(
+                        json_encode(
+                            array_map(
+                                function (AuthenticatedRequest $request) {
+                                    return $request->getParams();
+                                },
+                                $requests
+                            )
+                        )
+                    );
                 }
                 $requestSet->setRequests($requests);
                 $tracker->track($handler, $requestSet);
@@ -165,6 +165,7 @@ EOD
         }
 
         $output->writeln('<info>Success</info>');
+        $output->writeln('Requests imported: ' . $tracker->getCountOfLoggedRequests());
         $output->writeln('Memory peak usage: ' . memory_get_peak_usage(true));
     }
 }
