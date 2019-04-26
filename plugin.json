@@ -1,6 +1,8 @@
 {
     "name": "TrackingCLI",
     "description": "Import tracking data to Matomo via CLI and stdin",
+    "license": "Apache-2.0",
+    "keywords": ["cli", "tracking", "import", "stdin"],
     "version": "1.0.0",
     "theme": false,
     "require": {
@@ -13,12 +15,9 @@
         }
     ],
     "support": {
-        "issues": "",
-        "wiki": "",
-        "source": "",
-        "docs": ""
+        "issues": "https://github.com/plesk/matomo-tracking-cli/issues",
+        "source": "https://github.com/plesk/matomo-tracking-cli",
+        "docs": "https://github.com/plesk/matomo-tracking-cli/blob/master/README.md"
     },
-    "homepage": "",
-    "license": "Apache-2.0",
-    "keywords": ["cli", "tracking", "import", "stdin"]
+    "homepage": "https://github.com/plesk/matomo-tracking-cli"
 }
