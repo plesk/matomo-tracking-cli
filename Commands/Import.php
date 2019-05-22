@@ -131,7 +131,9 @@ EOD
             $requests = [];
             for ($i = 0; $i < $batchsize && !$file->eof(); $i++) {
                 $rowstring = $file->fgets();
-
+                if (!$rowstring) {
+                    continue;
+                }
                 $row = explode($delimeter, $rowstring);
 
                 $request = [
