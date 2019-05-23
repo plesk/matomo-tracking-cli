@@ -122,15 +122,12 @@ EOD
         $handler  = Handler\Factory::make();
         $requestSet = new RequestSet();
 
-        $file->setFlags(
-            SplFileObject::SKIP_EMPTY |
-            SplFileObject::DROP_NEW_LINE
-        );
         while (!$file->eof()) {
 
             $requests = [];
             for ($i = 0; $i < $batchsize && !$file->eof(); $i++) {
-                $rowstring = $file->fgets();
+                // SplFileObject::DROP_NEW_LINE drops all rest of the string after null ASCII character
+                $rowstring = rtrim($file->fgets(), "\n");
                 if (!$rowstring) {
                     continue;
                 }
