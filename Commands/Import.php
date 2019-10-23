@@ -146,7 +146,7 @@ EOD
             }
 
             if ($requests) {
-                if ($output->getVerbosity() >= OutputInterface::VERBOSITY_VERY_VERBOSE) {
+                if ($output->getVerbosity() >= OutputInterface::VERBOSITY_DEBUG) {
                     $output->writeln(
                         json_encode(
                             array_map(

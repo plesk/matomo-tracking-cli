@@ -1,4 +1,7 @@
 # Changelog
+ 
+## 1.1.0
+The output of imported rows was moved from very verbose log level to the debug log level
 
 ## 1.0.1
 - BUGFIX The import is failed if null ASCII delimeter is used
