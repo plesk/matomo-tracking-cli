@@ -1,4 +1,7 @@
 # Changelog
+
+## 1.2.0
+'fail-no-data' option was added to fail when no rows imported
  
 ## 1.1.0
 The output of imported rows was moved from very verbose log level to the debug log level
