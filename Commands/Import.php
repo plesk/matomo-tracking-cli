@@ -8,6 +8,7 @@
 namespace Piwik\Plugins\TrackingCLI\Commands;
 
 use Piwik\Plugin\ConsoleCommand;
+use Piwik\Plugins\TrackingCLI\lib\Exception;
 use Piwik\Plugins\TrackingCLI\lib\AuthenticatedRequest;
 use Piwik\Tracker;
 use Piwik\Tracker\RequestSet;
@@ -79,6 +80,13 @@ EOD
             InputOption::VALUE_OPTIONAL,
             'Batch size when importing',
             $this->defaultBatchsize
+        );
+
+        $this->addOption(
+            'fail-no-data',
+            'e',
+            InputOption::VALUE_NONE,
+            "Fail if no rows imported"
         );
 
         $this
@@ -161,6 +169,12 @@ EOD
                 $requestSet->setRequests($requests);
                 $tracker->track($handler, $requestSet);
             }
+        }
+
+        if (!$tracker->getCountOfLoggedRequests() &&
+            $input->getOption('fail-no-data')
+        ) {
+            throw new Exception("No rows have been imported");
         }
 
         $output->writeln('<info>Success</info>');

@@ -11,14 +11,14 @@ Import tracking data to Matomo via CLI and stdin.
 
 ```
 Usage:
- trackingcli:import [-s|--idsite="..."] [-c|--columns="..."] [-d|--delimeter[="..."]] [-z|--batchsize[="..."]] [inputfile]
+ trackingcli:import [-s|--idsite="..."] [-c|--columns="..."] [-d|--delimeter[="..."]] [-z|--batchsize[="..."]] [-e|--fail-no-data] [inputfile]
 
 Arguments:
  inputfile             Path to input file or '-' for stdin (default: "-")
 
 Options:
  --idsite (-s)         Matomo site ID
- --columns (-c)        Columns map
+ --columns (-c)        Columns map 
                            Format: matomoApiArgumentName1|matomoApiArgumentName2|...
                            Example: url|action_name|ua
                            See https://developer.matomo.org/api-reference/tracking-api for details
@@ -27,12 +27,14 @@ Options:
                            Example: |
                            Example: \0 (default: "\\29")
  --batchsize (-z)      Batch size when importing (default: 100)
+ --fail-no-data (-e)   Fail if no rows imported
  --help (-h)           Display this help message
  --quiet (-q)          Do not output any message
  --verbose (-v|vv|vvv) Increase the verbosity of messages: 1 for normal output, 2 for more verbose output and 3 for debug
  --version (-V)        Display this application version
  --ansi                Force ANSI output
  --no-ansi             Disable ANSI output
+ --xhprof              Enable profiling with XHProf
 ```
 
 ### Example
